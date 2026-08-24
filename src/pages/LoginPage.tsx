@@ -14,7 +14,11 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   if (!configured) {
-    return <ConfigError />;
+    return (
+      <Card className="text-center">
+        <p className="text-tm-muted">Supabase environment variables are not configured.</p>
+      </Card>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,38 +35,25 @@ export function LoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md space-y-6">
+    <div className="mx-auto max-w-md space-y-5">
       <div className="text-center">
-        <img src="/assets/trademirror-logo.svg" alt="TradeMirror" className="mx-auto h-12 w-12" />
-        <h1 className="mt-4 text-2xl font-bold text-white">Log In</h1>
+        <img src="/assets/trademirror-logo.svg" alt="TradeMirror" className="mx-auto h-10 w-10" />
+        <h1 className="mt-3 text-2xl font-bold text-tm-text">Log In</h1>
       </div>
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           <Input label="Password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           {error && <p className="text-sm text-loss">{error}</p>}
-          <Button type="submit" fullWidth disabled={loading}>
+          <Button type="submit" variant="profit" fullWidth disabled={loading}>
             {loading ? 'Signing in...' : 'Log In'}
           </Button>
         </form>
         <div className="mt-4 flex flex-col gap-2 text-center text-sm">
-          <Link to="/forgot-password" className="text-accent-gold hover:underline">
-            Forgot Password
-          </Link>
-          <Link to="/register" className="text-gray-400 hover:text-white">
-            Create an account
-          </Link>
+          <Link to="/forgot-password" className="text-accent-gold hover:underline">Forgot Password</Link>
+          <Link to="/register" className="text-tm-muted hover:text-tm-text">Create an account</Link>
         </div>
       </Card>
     </div>
-  );
-}
-
-function ConfigError() {
-  return (
-    <Card className="mx-auto max-w-md text-center">
-      <h2 className="text-lg font-semibold text-white">Configuration Required</h2>
-      <p className="mt-2 text-gray-400">Supabase environment variables are not configured.</p>
-    </Card>
   );
 }

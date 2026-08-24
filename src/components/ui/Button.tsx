@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '../../utils';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'profit';
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
@@ -9,11 +9,10 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants: Record<Variant, string> = {
-  primary:
-    'bg-accent-gold text-surface-950 hover:bg-accent-gold-dim font-semibold shadow-lg shadow-accent-gold/10',
-  secondary:
-    'bg-surface-700 text-white border border-surface-600 hover:bg-surface-600',
-  ghost: 'bg-transparent text-gray-300 hover:bg-surface-800 hover:text-white',
+  primary: 'bg-accent-gold text-tm-bg hover:bg-accent-gold-dim font-semibold',
+  profit: 'bg-profit text-tm-bg hover:bg-profit-dim font-semibold',
+  secondary: 'bg-tm-card text-tm-text border border-tm-border hover:bg-tm-card-hover',
+  ghost: 'bg-transparent text-tm-muted hover:bg-tm-card hover:text-tm-text',
   danger: 'bg-loss/15 text-loss border border-loss/30 hover:bg-loss/25',
 };
 

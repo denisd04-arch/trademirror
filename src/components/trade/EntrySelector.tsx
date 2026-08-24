@@ -15,17 +15,17 @@ export function EntrySelector({
   if (disabled) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid grid-cols-3 gap-2">
       {options.map((option) => (
         <button
           key={option}
           type="button"
           onClick={() => onChange(option)}
           className={cn(
-            'rounded-xl border px-4 py-2 text-sm font-medium transition',
+            'rounded-lg border py-2 text-xs font-semibold tracking-wide transition',
             value === option
-              ? 'border-accent-gold bg-accent-gold/15 text-accent-gold'
-              : 'border-surface-600 bg-surface-800 text-gray-300 hover:border-surface-500',
+              ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
+              : 'border-tm-border bg-tm-card text-tm-muted',
           )}
         >
           {option}

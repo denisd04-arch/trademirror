@@ -8,16 +8,7 @@ export function Card({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border border-surface-600/80 bg-surface-900/90 p-5 shadow-xl backdrop-blur',
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
+  return <div className={cn('tm-card p-4', className)}>{children}</div>;
 }
 
 export function CardTitle({
@@ -28,7 +19,7 @@ export function CardTitle({
   className?: string;
 }) {
   return (
-    <h2 className={cn('mb-4 text-sm font-semibold tracking-wide text-gray-400 uppercase', className)}>
+    <h2 className={cn('tm-section-title mb-3', className)}>
       {children}
     </h2>
   );

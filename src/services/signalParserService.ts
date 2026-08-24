@@ -6,6 +6,23 @@ export type ParseScreenshotResult =
   | { success: true; signal: TradeSignal }
   | { success: false; error: string; configurationError?: boolean };
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(',')[1];
+      if (!base64) {
+        reject(new Error('Failed to read image'));
+        return;
+      }
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error('Failed to read image'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export const signalParserService = {
   parseText(text: string) {
     return parseTextSignal(text);
@@ -17,19 +34,19 @@ export const signalParserService = {
     if (!apiKeyConfigured) {
       return {
         success: false,
-        error:
-          'AI screenshot parsing is not configured. Set OPENAI_API_KEY in Vercel and VITE_AI_PARSER_ENABLED=true, or use Manual Input / Paste Signal.',
+        error: 'AI parser is not configured.',
         configurationError: true,
       };
     }
 
-    const formData = new FormData();
-    formData.append('image', file);
-
     try {
+      const base64 = await fileToBase64(file);
+      const mimeType = file.type || 'image/png';
+
       const response = await fetch('/api/parse-screenshot', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, mimeType }),
       });
 
       const payload = await response.json();
@@ -37,14 +54,15 @@ export const signalParserService = {
       if (!response.ok) {
         return {
           success: false,
-          error: payload.error ?? 'Failed to parse screenshot',
+          error: payload.error ?? 'Could not detect a valid trading signal.',
         };
       }
 
+      const previewUrl = URL.createObjectURL(file);
       const validated = safeValidateTradeSignal({
         ...payload,
         source: 'SCREENSHOT',
-        screenshotUrl: URL.createObjectURL(file),
+        screenshotUrl: previewUrl,
       });
 
       if (!validated.success) {
@@ -56,13 +74,13 @@ export const signalParserService = {
         signal: {
           ...validated.data,
           screenshotFile: file,
-          screenshotUrl: URL.createObjectURL(file),
+          screenshotUrl: previewUrl,
         },
       };
     } catch {
       return {
         success: false,
-        error: 'Network error while parsing screenshot. Please try again.',
+        error: 'Could not read the screenshot.',
       };
     }
   },
