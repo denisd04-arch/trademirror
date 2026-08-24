@@ -6,13 +6,18 @@ function mapProfile(row: {
   first_name: string;
   last_name: string;
   email: string | null;
+  email_verified?: boolean;
   created_at: string;
   updated_at: string;
   last_login: string | null;
   account_status: string;
   active_strategy_id: string | null;
 }): Profile {
-  return row;
+  return {
+    ...row,
+    email_verified: row.email_verified ?? false,
+    account_status: row.account_status === 'disabled' ? 'disabled' : 'active',
+  };
 }
 
 export const profileService = {
@@ -28,9 +33,15 @@ export const profileService = {
   },
 
   async updateNames(userId: string, firstName: string, lastName: string): Promise<Profile> {
+    const trimmedFirst = firstName.trim();
+    const trimmedLast = lastName.trim();
+    if (!trimmedFirst || !trimmedLast) {
+      throw new Error('First name and last name are required');
+    }
+
     const { data, error } = await supabase
       .from('profiles')
-      .update({ first_name: firstName, last_name: lastName })
+      .update({ first_name: trimmedFirst, last_name: trimmedLast })
       .eq('id', userId)
       .select()
       .single();
@@ -39,12 +50,12 @@ export const profileService = {
     return mapProfile(data);
   },
 
-  async updateLastLogin(userId: string): Promise<void> {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', userId);
-
+  async updateLastLogin(): Promise<void> {
+    const { error } = await supabase.rpc('touch_last_login');
     if (error) throw error;
+  },
+
+  isAccountActive(profile: Profile | null): boolean {
+    return profile?.account_status !== 'disabled';
   },
 };

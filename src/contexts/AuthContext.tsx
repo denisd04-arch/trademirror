@@ -19,6 +19,7 @@ type AuthContextValue = {
   loading: boolean;
   configured: boolean;
   isEmailVerified: boolean;
+  isAccountDisabled: boolean;
   signUp: (data: {
     email: string;
     password: string;
@@ -47,8 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await profileService.get(userId);
       setProfile(data);
+      return data;
     } catch {
       setProfile(null);
+      return null;
     }
   }, []);
 
@@ -93,11 +96,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     firstName,
     lastName,
   }) => {
+    const trimmedFirst = firstName.trim();
+    const trimmedLast = lastName.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedFirst || !trimmedLast || !trimmedEmail || !password) {
+      return { error: 'First name, last name, email, and password are required' };
+    }
+
     const { error } = await supabase.auth.signUp({
-      email,
+      email: trimmedEmail,
       password,
       options: {
-        data: { first_name: firstName, last_name: lastName },
+        data: { first_name: trimmedFirst, last_name: trimmedLast },
         emailRedirectTo: `${window.location.origin}/verify-email`,
       },
     });
@@ -108,7 +119,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
     if (data.user) {
-      await profileService.updateLastLogin(data.user.id);
+      const loadedProfile = await loadProfile(data.user.id);
+      if (!profileService.isAccountActive(loadedProfile)) {
+        await supabase.auth.signOut();
+        setProfile(null);
+        return { error: 'Your account is currently unavailable. Please contact support.' };
+      }
+      await profileService.updateLastLogin();
       await loadProfile(data.user.id);
     }
     return {};
@@ -146,7 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? { error: error.message } : {};
   };
 
-  const isEmailVerified = Boolean(user?.email_confirmed_at);
+  const isEmailVerified = Boolean(user?.email_confirmed_at ?? profile?.email_verified);
+  const isAccountDisabled = Boolean(profile && profile.account_status === 'disabled');
 
   const value = useMemo(
     () => ({
@@ -156,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       configured,
       isEmailVerified,
+      isAccountDisabled,
       signUp,
       signIn,
       signOut,
@@ -172,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       configured,
       isEmailVerified,
+      isAccountDisabled,
       refreshProfile,
     ],
   );

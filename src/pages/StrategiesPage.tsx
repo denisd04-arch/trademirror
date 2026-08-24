@@ -43,7 +43,7 @@ function StrategiesContent() {
       currency: strategy.currency,
       risk_percent: strategy.risk_percent,
       entry_method: strategy.entry_method,
-      default_tp: strategy.default_tp,
+      default_tp: strategy.default_tp ?? 'TP1',
     });
     setShowForm(true);
     setSaved(false);
@@ -58,7 +58,7 @@ function StrategiesContent() {
       } else {
         const created = await strategyService.create(user.id, form);
         if (strategies.length === 0) {
-          await strategyService.setActive(user.id, created.id);
+          await strategyService.setActive(created.id);
         }
       }
       await refreshStrategies();
@@ -74,7 +74,7 @@ function StrategiesContent() {
     await strategyService.remove(deleteId);
     if (activeStrategyId === deleteId) {
       const remaining = strategies.filter((s) => s.id !== deleteId);
-      if (remaining[0]) await strategyService.setActive(user.id, remaining[0].id);
+      if (remaining[0]) await strategyService.setActive(remaining[0].id);
     }
     setDeleteId(null);
     await refreshStrategies();

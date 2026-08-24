@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { ProtectedRoute, VerifiedRoute } from '../components/layout/ProtectedRoute';
 
 function AccountContent() {
-  const { user, profile, refreshProfile, updateEmail, signOut } = useAuth();
+  const { user, profile, refreshProfile, updateEmail, signOut, isEmailVerified } = useAuth();
   const [firstName, setFirstName] = useState(profile?.first_name ?? '');
   const [lastName, setLastName] = useState(profile?.last_name ?? '');
   const [email, setEmail] = useState(profile?.email ?? user?.email ?? '');
@@ -67,7 +67,10 @@ function AccountContent() {
           {profile?.first_name} {profile?.last_name}
         </p>
         <p className="text-xs text-tm-muted">{profile?.email ?? user?.email}</p>
-        <p className="mt-2 text-xs text-tm-green">Logged in</p>
+        <p className="mt-2 text-xs text-tm-muted">
+          Status: {profile?.account_status === 'disabled' ? 'Unavailable' : 'Logged in'}
+          {isEmailVerified ? ' · Email verified' : ' · Email not verified'}
+        </p>
       </div>
 
       <div className="tm-card space-y-3 p-3.5">
