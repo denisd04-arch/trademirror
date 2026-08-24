@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getToken } from '@vercel/connect';
 import { z } from 'zod';
-import { normalizeAiResponse } from '../src/parsers/normalizeAiResponse';
+import { normalizeAiResponse } from '../src/parsers/normalizeAiResponse.js';
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 10;
