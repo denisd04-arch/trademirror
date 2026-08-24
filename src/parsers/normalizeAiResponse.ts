@@ -1,4 +1,4 @@
-import type { Direction, TakeProfit, TradeSignal } from '../types';
+import type { Direction, TakeProfit, TradeSignal } from '../types/index.js';
 
 export type RawAiSignal = {
   symbol?: string | null;
