@@ -1,18 +1,25 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardPaste, ImageUp, Keyboard, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronRight,
+  ClipboardPaste,
+  ImageUp,
+  Keyboard,
+  Loader2,
+} from 'lucide-react';
 import { useTrade } from '../../contexts/TradeContext';
 import { signalParserService } from '../../services/signalParserService';
 import type { Direction, TradeSignal } from '../../types';
 import { cn } from '../../utils';
 
-type InputMode = 'upload' | 'manual' | 'paste';
+type View = 'home' | 'manual' | 'screenshot' | 'paste';
 
 export function TradeInputPanel() {
   const navigate = useNavigate();
   const { applySignalWithDefaults } = useTrade();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [mode, setMode] = useState<InputMode>('upload');
+  const [view, setView] = useState<View>('home');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -34,6 +41,7 @@ export function TradeInputPanel() {
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
+    setView('screenshot');
     setError('');
   };
 
@@ -72,8 +80,8 @@ export function TradeInputPanel() {
       .map((tp, i) => (tp ? { label: `TP${i + 1}`, price: Number(tp) } : null))
       .filter((tp): tp is { label: string; price: number } => Boolean(tp && tp.price > 0));
 
-    if (!manual.stopLoss || !manual.bestEntry || !manual.worstEntry || takeProfits.length === 0) {
-      setError('Entry zone, stop loss, and at least one TP are required');
+    if (!manual.stopLoss || !manual.bestEntry || !manual.worstEntry) {
+      setError('Entry zone and stop loss are required');
       return;
     }
 
@@ -89,71 +97,99 @@ export function TradeInputPanel() {
     });
   };
 
-  const updateTp = (index: number, value: string) => {
-    setManual((m) => {
-      const tps = [...m.tps];
-      tps[index] = value;
-      return { ...m, tps };
-    });
+  const goHome = () => {
+    setView('home');
+    setError('');
   };
 
-  const removeTp = (index: number) => {
-    setManual((m) => {
-      const tps = [...m.tps];
-      tps[index] = '';
-      return { ...m, tps };
-    });
-  };
+  if (view === 'home') {
+    return (
+      <div className="space-y-3">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleFileSelect(file);
+          }}
+        />
+
+        <button type="button" onClick={() => setView('manual')} className="tm-btn-primary">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-black/15">
+              <Keyboard className="h-4 w-4" />
+            </div>
+            <div className="text-left">
+              <p className="text-[15px] font-semibold">Input Trade</p>
+              <p className="text-[11px] font-normal opacity-80">Enter direction, entry zone &amp; stop loss</p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0" />
+        </button>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          <SecondaryCard
+            icon={<ImageUp className="h-5 w-5" />}
+            title="Screenshot"
+            subtitle="Upload a signal image"
+            onClick={() => {
+              if (previewUrl) setView('screenshot');
+              else fileRef.current?.click();
+            }}
+          />
+          <SecondaryCard
+            icon={<ClipboardPaste className="h-5 w-5" />}
+            title="Paste"
+            subtitle="Paste a signal message"
+            onClick={() => setView('paste')}
+          />
+        </div>
+
+        {error && <ErrorBox message={error} />}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {mode === 'upload' && (
-        <>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileSelect(file);
-            }}
-          />
+      <button
+        type="button"
+        onClick={goHome}
+        className="inline-flex items-center gap-1.5 text-sm text-tm-muted hover:text-tm-text"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </button>
 
+      {view === 'screenshot' && (
+        <>
           {!previewUrl ? (
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex w-full items-center gap-4 rounded-2xl border border-accent-gold/30 bg-accent-gold/10 px-5 py-5 text-left transition hover:bg-accent-gold/15"
+              className="tm-card flex w-full flex-col items-center gap-3 p-6 text-center"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent-gold/20">
-                <ImageUp className="h-5 w-5 text-accent-gold" />
-              </div>
-              <div>
-                <p className="text-base font-semibold text-tm-text">Upload Screenshot</p>
-                <p className="mt-0.5 text-sm text-tm-muted">Upload a trading signal image</p>
-              </div>
+              <ImageUp className="h-8 w-8 text-tm-muted" />
+              <p className="text-sm font-medium text-tm-text">Choose screenshot</p>
             </button>
           ) : (
-            <div className="tm-card p-4">
+            <div className="tm-card p-3.5">
               <p className="tm-section-title">Selected Screenshot</p>
               <img
                 src={previewUrl}
                 alt="Selected screenshot"
-                className="mt-3 max-h-64 w-full rounded-xl object-contain"
+                className="mt-3 max-h-64 w-full rounded-[10px] object-contain"
               />
               {loading ? (
-                <div className="mt-4 flex items-center justify-center gap-2 py-3 text-sm text-tm-text-secondary">
-                  <Loader2 className="h-4 w-4 animate-spin text-accent-gold" />
-                  Analyzing signal...
+                <div className="mt-3 flex items-center justify-center gap-2 py-3 text-sm text-tm-muted">
+                  <Loader2 className="h-4 w-4 animate-spin text-tm-gold" />
+                  Processing...
                 </div>
               ) : (
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAnalyze}
-                    className="flex-1 rounded-xl bg-profit py-3 text-sm font-semibold text-tm-bg transition hover:bg-profit-dim"
-                  >
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={handleAnalyze} className="tm-btn-primary flex-1 justify-center">
                     Analyze Signal
                   </button>
                   <button
@@ -161,8 +197,9 @@ export function TradeInputPanel() {
                     onClick={() => {
                       setSelectedFile(null);
                       setPreviewUrl(null);
+                      fileRef.current?.click();
                     }}
-                    className="rounded-xl border border-tm-border px-4 py-3 text-sm text-tm-muted"
+                    className="tm-btn-secondary"
                   >
                     Change
                   </button>
@@ -173,31 +210,27 @@ export function TradeInputPanel() {
         </>
       )}
 
-      {mode === 'paste' && (
-        <div className="tm-card p-4">
+      {view === 'paste' && (
+        <div className="tm-card p-3.5">
           <p className="text-base font-semibold text-tm-text">Paste Signal</p>
-          <p className="mt-1 text-sm text-tm-muted">Paste a Telegram-style signal message</p>
+          <p className="mt-1 text-xs text-tm-muted">Paste a Telegram-style signal message</p>
           <textarea
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             placeholder={`XAUUSD BUY NOW\nENTRY: 4585 / 4582\nSL: 4577\nTP1: 4590\nTP2: 4595`}
-            className="tm-input mt-4 min-h-40 resize-none"
+            className="tm-input mt-3 min-h-36 resize-none"
           />
-          <button
-            type="button"
-            onClick={handlePaste}
-            className="mt-3 w-full rounded-xl bg-profit py-3 text-sm font-semibold text-tm-bg transition hover:bg-profit-dim"
-          >
+          <button type="button" onClick={handlePaste} className="tm-btn-primary mt-3 justify-center">
             Parse Signal
           </button>
         </div>
       )}
 
-      {mode === 'manual' && (
+      {view === 'manual' && (
         <div className="space-y-4">
           <div>
-            <p className="text-xl font-bold text-tm-text">Input Trade</p>
-            <p className="mt-1 text-sm text-tm-muted">Enter the minimum details to calculate your lot size.</p>
+            <h2 className="text-lg font-bold text-tm-text">Input Trade</h2>
+            <p className="mt-1 text-xs text-tm-muted">Enter the minimum details to calculate your lot size.</p>
           </div>
 
           <div>
@@ -209,11 +242,11 @@ export function TradeInputPanel() {
                   type="button"
                   onClick={() => setManual((m) => ({ ...m, direction: dir }))}
                   className={cn(
-                    'rounded-xl border py-3 text-sm font-semibold transition',
+                    'rounded-[10px] border py-3 text-sm font-semibold',
                     manual.direction === dir
                       ? dir === 'BUY'
-                        ? 'border-profit bg-profit/10 text-profit'
-                        : 'border-loss bg-loss/10 text-loss'
+                        ? 'border-tm-green bg-tm-green/10 text-tm-green'
+                        : 'border-tm-red bg-tm-red/10 text-tm-red'
                       : 'border-tm-border bg-tm-card text-tm-muted',
                   )}
                 >
@@ -224,10 +257,10 @@ export function TradeInputPanel() {
           </div>
 
           <div>
-            <p className="tm-label">Entry</p>
+            <p className="tm-label">Entry Zone</p>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <Field label="Entry 1" value={manual.bestEntry} onChange={(v) => setManual((m) => ({ ...m, bestEntry: v }))} />
-              <Field label="Entry 2" value={manual.worstEntry} onChange={(v) => setManual((m) => ({ ...m, worstEntry: v }))} />
+              <Field label="Best Entry" value={manual.bestEntry} onChange={(v) => setManual((m) => ({ ...m, bestEntry: v }))} />
+              <Field label="Worst Entry" value={manual.worstEntry} onChange={(v) => setManual((m) => ({ ...m, worstEntry: v }))} />
             </div>
           </div>
 
@@ -238,73 +271,54 @@ export function TradeInputPanel() {
             <div className="mt-2 space-y-2">
               {manual.tps.map((tp, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="w-10 text-xs font-semibold text-tm-muted">TP{index + 1}</span>
+                  <span className="w-9 text-[11px] font-semibold text-tm-muted">TP{index + 1}</span>
                   <input
                     className="tm-input"
                     value={tp}
-                    onChange={(e) => updateTp(index, e.target.value)}
-                    placeholder="0.00"
+                    onChange={(e) =>
+                      setManual((m) => {
+                        const tps = [...m.tps];
+                        tps[index] = e.target.value;
+                        return { ...m, tps };
+                      })
+                    }
+                    placeholder="Optional"
                   />
-                  {tp && (
-                    <button type="button" onClick={() => removeTp(index)} className="px-2 text-tm-muted">
-                      ×
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleManual}
-            className="w-full rounded-xl bg-profit py-3.5 text-sm font-semibold text-tm-bg transition hover:bg-profit-dim"
-          >
+          <button type="button" onClick={handleManual} className="tm-btn-primary justify-center">
             Calculate
           </button>
-          <p className="text-center text-xs text-tm-muted">Take profits are optional — add them after calculating.</p>
+          <p className="text-center text-[11px] text-tm-muted">
+            Take profits are optional — add them after calculating.
+          </p>
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        <ModeTab active={mode === 'upload'} icon={<ImageUp className="h-4 w-4" />} label="Screenshot" onClick={() => setMode('upload')} />
-        <ModeTab active={mode === 'paste'} icon={<ClipboardPaste className="h-4 w-4" />} label="Paste" onClick={() => setMode('paste')} />
-        <ModeTab active={mode === 'manual'} icon={<Keyboard className="h-4 w-4" />} label="Manual" onClick={() => setMode('manual')} />
-      </div>
-
-      {error && (
-        <div className="rounded-xl border border-loss/30 bg-loss/10 px-4 py-3 text-sm text-loss">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBox message={error} />}
     </div>
   );
 }
 
-function ModeTab({
-  active,
+function SecondaryCard({
   icon,
-  label,
+  title,
+  subtitle,
   onClick,
 }: {
-  active: boolean;
   icon: React.ReactNode;
-  label: string;
+  title: string;
+  subtitle: string;
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-medium transition',
-        active
-          ? 'border-accent-gold/40 bg-accent-gold/10 text-accent-gold'
-          : 'border-tm-border bg-tm-card text-tm-muted hover:border-tm-border-hover',
-      )}
-    >
-      {icon}
-      {label}
+    <button type="button" onClick={onClick} className="tm-card p-3.5 text-left transition hover:bg-tm-card-hover">
+      <div className="text-tm-muted">{icon}</div>
+      <p className="mt-2 text-sm font-medium text-tm-text">{title}</p>
+      <p className="mt-0.5 text-[11px] text-tm-muted">{subtitle}</p>
     </button>
   );
 }
@@ -320,8 +334,16 @@ function Field({
 }) {
   return (
     <label>
-      <span className="text-xs text-tm-muted">{label}</span>
+      <span className="text-[11px] text-tm-muted">{label}</span>
       <input className="tm-input mt-1" value={value} onChange={(e) => onChange(e.target.value)} />
     </label>
+  );
+}
+
+function ErrorBox({ message }: { message: string }) {
+  return (
+    <div className="rounded-[10px] border border-tm-red/30 bg-tm-red/10 px-3 py-2.5 text-sm text-tm-red">
+      {message}
+    </div>
   );
 }

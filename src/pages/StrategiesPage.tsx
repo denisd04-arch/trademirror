@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTrade } from '../contexts/TradeContext';
 import { strategyService } from '../services/strategyService';
 import type { Strategy, StrategyFormData } from '../types';
-import { Button } from '../components/ui/Button';
-import { Card, CardTitle } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import { StrategyForm } from '../components/trade/StrategyForm';
 import { ProtectedRoute, VerifiedRoute } from '../components/layout/ProtectedRoute';
+import { cn, formatRiskPercent } from '../utils';
 
 const emptyForm: StrategyFormData = {
   strategy_name: '',
@@ -20,18 +19,20 @@ const emptyForm: StrategyFormData = {
 };
 
 function StrategiesContent() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { strategies, refreshStrategies, selectStrategy, activeStrategyId } = useTrade();
   const [form, setForm] = useState<StrategyFormData>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
 
   const openCreate = () => {
     setEditingId(null);
     setForm(emptyForm);
     setShowForm(true);
+    setSaved(false);
   };
 
   const openEdit = (strategy: Strategy) => {
@@ -45,6 +46,7 @@ function StrategiesContent() {
       default_tp: strategy.default_tp,
     });
     setShowForm(true);
+    setSaved(false);
   };
 
   const saveStrategy = async () => {
@@ -61,6 +63,7 @@ function StrategiesContent() {
       }
       await refreshStrategies();
       setShowForm(false);
+      setSaved(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save strategy');
     }
@@ -77,102 +80,158 @@ function StrategiesContent() {
     await refreshStrategies();
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Strategies</h1>
-          <p className="text-gray-400">Manage your trading accounts and risk settings</p>
+  if (showForm) {
+    return (
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => setShowForm(false)}
+          className="inline-flex items-center gap-1.5 text-sm text-tm-muted"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+        <div className="tm-card p-3.5">
+          <StrategyForm
+            form={form}
+            onChange={setForm}
+            title={editingId ? `Edit ${form.strategy_name}` : 'New Strategy'}
+            onClose={() => setShowForm(false)}
+          />
+          {error && <p className="mt-3 text-sm text-tm-red">{error}</p>}
+          <button type="button" onClick={saveStrategy} className="tm-btn-primary mt-4 justify-center">
+            Save Strategy
+          </button>
         </div>
-        <Button onClick={openCreate}>Create Strategy</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-lg font-bold text-tm-text">My Strategies</h1>
+        <button
+          type="button"
+          onClick={openCreate}
+          className="inline-flex items-center gap-1 rounded-[10px] bg-tm-gold px-3 py-1.5 text-xs font-semibold text-tm-bg"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Add Strategy
+        </button>
       </div>
 
-      {strategies.length === 0 && !showForm && (
-        <Card className="text-center">
-          <p className="text-gray-300">Create your first trading account</p>
-          <Button className="mt-4" onClick={openCreate}>
+      <div className="tm-card p-3.5">
+        <p className="tm-section-title">Account</p>
+        <p className="mt-2 text-sm font-semibold text-tm-text">
+          {profile?.first_name} {profile?.last_name}
+        </p>
+        <p className="text-xs text-tm-muted">{profile?.email ?? user?.email}</p>
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <span className="text-tm-muted">Status</span>
+          <span className="text-tm-green">Logged in</span>
+        </div>
+      </div>
+
+      {saved && <p className="text-center text-xs text-tm-gold">Strategy saved successfully</p>}
+
+      {strategies.length === 0 ? (
+        <div className="tm-card p-6 text-center">
+          <p className="text-sm text-tm-muted">Create your first trading account</p>
+          <button type="button" onClick={openCreate} className="tm-btn-primary mt-4 justify-center">
             Create Strategy
-          </Button>
-        </Card>
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {strategies.map((strategy) => {
+            const isActive = strategy.id === activeStrategyId;
+            const symbol = strategy.currency === 'EUR' ? '€' : '$';
+            return (
+              <div
+                key={strategy.id}
+                className={cn(
+                  'tm-card p-3.5',
+                  isActive && 'border-tm-gold/50 bg-tm-gold/5',
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-tm-text">{strategy.strategy_name}</h3>
+                      {isActive && (
+                        <span className="rounded-md bg-tm-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-tm-gold">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-tm-muted">
+                      {symbol}
+                      {strategy.account_balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {' · Risk '}
+                      {formatRiskPercent(strategy.risk_percent)}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-tm-muted">Entry</p>
+                    <p className="mt-0.5 font-medium text-tm-text">{strategy.entry_method}</p>
+                  </div>
+                  <div>
+                    <p className="text-tm-muted">Default TP</p>
+                    <p className="mt-0.5 font-medium text-tm-text">{strategy.default_tp}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(strategy)}
+                    className="rounded-[10px] border border-tm-border px-3 py-1.5 text-xs text-tm-text"
+                  >
+                    Edit
+                  </button>
+                  {!isActive && (
+                    <button
+                      type="button"
+                      onClick={() => selectStrategy(strategy.id)}
+                      className="rounded-[10px] border border-tm-gold/40 px-3 py-1.5 text-xs text-tm-gold"
+                    >
+                      Set Active
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setDeleteId(strategy.id)}
+                    className="rounded-[10px] border border-tm-red/30 px-3 py-1.5 text-xs text-tm-red"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
 
-      {showForm && (
-        <Card>
-          <CardTitle>{editingId ? 'Edit Strategy' : 'New Strategy'}</CardTitle>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Strategy Name" value={form.strategy_name} onChange={(e) => setForm((f) => ({ ...f, strategy_name: e.target.value }))} />
-            <Input label="Account Balance" type="number" min={1} value={form.account_balance} onChange={(e) => setForm((f) => ({ ...f, account_balance: Number(e.target.value) }))} />
-            <Select label="Currency" value={form.currency} onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value as 'USD' | 'EUR' }))}>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-            </Select>
-            <Input label="Risk %" type="number" min={0.01} step={0.1} value={form.risk_percent} onChange={(e) => setForm((f) => ({ ...f, risk_percent: Number(e.target.value) }))} />
-            <Select label="Entry Method" value={form.entry_method} onChange={(e) => setForm((f) => ({ ...f, entry_method: e.target.value as 'BEST' | 'MIDDLE' | 'WORST' }))}>
-              <option value="BEST">Best</option>
-              <option value="MIDDLE">Middle</option>
-              <option value="WORST">Worst</option>
-            </Select>
-            <Input label="Default TP" value={form.default_tp} onChange={(e) => setForm((f) => ({ ...f, default_tp: e.target.value }))} />
-          </div>
-          {error && <p className="mt-2 text-sm text-loss">{error}</p>}
-          <div className="mt-4 flex gap-2">
-            <Button onClick={saveStrategy}>Save</Button>
-            <Button variant="ghost" onClick={() => setShowForm(false)}>
-              Cancel
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      <div className="grid gap-4">
-        {strategies.map((strategy) => (
-          <Card key={strategy.id} className={strategy.id === activeStrategyId ? 'border-accent-gold/40' : ''}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="text-lg font-semibold text-white">{strategy.strategy_name}</h3>
-                <p className="mt-1 text-sm text-gray-400">
-                  {strategy.currency === 'EUR' ? '€' : '$'}
-                  {strategy.account_balance.toLocaleString()} · {strategy.risk_percent}% ·{' '}
-                  {strategy.entry_method} · {strategy.default_tp}
-                </p>
-                {strategy.id === activeStrategyId && (
-                  <span className="mt-2 inline-block rounded-lg bg-accent-gold/15 px-2 py-1 text-xs text-accent-gold">
-                    Active
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {strategy.id !== activeStrategyId && (
-                  <Button variant="secondary" onClick={() => selectStrategy(strategy.id)}>
-                    Activate
-                  </Button>
-                )}
-                <Button variant="ghost" onClick={() => openEdit(strategy)}>
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button variant="danger" onClick={() => setDeleteId(strategy.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Link to="/account" className="block text-center text-xs text-tm-muted hover:text-tm-text">
+        Back to Account
+      </Link>
 
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <Card className="max-w-md">
-            <h3 className="text-lg font-semibold text-white">Delete this strategy?</h3>
-            <p className="mt-2 text-gray-400">This action cannot be undone.</p>
+          <div className="tm-card max-w-sm p-4">
+            <h3 className="text-sm font-semibold text-tm-text">Delete this strategy?</h3>
+            <p className="mt-1.5 text-xs text-tm-muted">This action cannot be undone.</p>
             <div className="mt-4 flex gap-2">
-              <Button variant="danger" onClick={confirmDelete}>
+              <button type="button" onClick={confirmDelete} className="flex-1 rounded-[10px] bg-tm-red py-2 text-sm font-semibold text-white">
                 Delete
-              </Button>
-              <Button variant="ghost" onClick={() => setDeleteId(null)}>
+              </button>
+              <button type="button" onClick={() => setDeleteId(null)} className="tm-btn-secondary flex-1">
                 Cancel
-              </Button>
+              </button>
             </div>
-          </Card>
+          </div>
         </div>
       )}
     </div>

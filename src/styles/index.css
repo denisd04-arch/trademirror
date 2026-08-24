@@ -1,20 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  --color-tm-bg: #09090b;
-  --color-tm-card: #111113;
-  --color-tm-card-hover: #18181b;
-  --color-tm-border: #27272a;
-  --color-tm-border-hover: #3f3f46;
-  --color-tm-muted: #71717a;
-  --color-tm-text: #fafafa;
-  --color-tm-text-secondary: #d4d4d8;
-  --color-accent-gold: #d4a853;
-  --color-accent-gold-dim: #b8923f;
+  --color-tm-bg: #08080a;
+  --color-tm-card: #111114;
+  --color-tm-card-hover: #151519;
+  --color-tm-border: #29292f;
+  --color-tm-border-hover: #3a3a42;
+  --color-tm-muted: #8a8a94;
+  --color-tm-text: #f5f5f7;
+  --color-tm-text-secondary: #c8c8d0;
+  --color-tm-gold: #d8a928;
+  --color-tm-gold-dim: #b89220;
+  --color-tm-green: #22c55e;
+  --color-tm-green-dim: #16a34a;
+  --color-tm-red: #ef4444;
+  --color-tm-red-dim: #dc2626;
+  --color-tm-warning: #f59e0b;
+  --color-accent-gold: #d8a928;
+  --color-accent-gold-dim: #b89220;
   --color-profit: #22c55e;
   --color-profit-dim: #16a34a;
   --color-loss: #ef4444;
-  --color-warning: #f59e0b;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -44,7 +50,7 @@ button {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-accent-gold) 35%, transparent);
+  background: color-mix(in srgb, var(--color-tm-gold) 35%, transparent);
 }
 
 .tm-label {
@@ -57,21 +63,22 @@ button {
 
 .tm-input {
   width: 100%;
-  border-radius: 0.75rem;
+  border-radius: 10px;
   border: 1px solid var(--color-tm-border);
-  background: color-mix(in srgb, var(--color-tm-card) 90%, transparent);
-  padding: 0.75rem 0.875rem;
+  background: var(--color-tm-bg);
+  padding: 0.7rem 0.85rem;
   color: var(--color-tm-text);
   outline: none;
-  transition: border-color 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .tm-input:focus {
-  border-color: color-mix(in srgb, var(--color-accent-gold) 60%, var(--color-tm-border));
+  border-color: var(--color-tm-gold);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-tm-gold) 20%, transparent);
 }
 
 .tm-card {
-  border-radius: 0.875rem;
+  border-radius: 14px;
   border: 1px solid var(--color-tm-border);
   background: var(--color-tm-card);
 }
@@ -82,4 +89,42 @@ button {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-tm-muted);
+}
+
+.tm-btn-primary {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-tm-green);
+  padding: 0.9rem 1rem;
+  color: var(--color-tm-bg);
+  font-weight: 600;
+  transition: background 150ms ease;
+}
+
+.tm-btn-primary:hover {
+  background: var(--color-tm-green-dim);
+}
+
+.tm-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tm-btn-secondary {
+  border-radius: 12px;
+  border: 1px solid var(--color-tm-border);
+  background: var(--color-tm-card);
+  padding: 0.75rem 1rem;
+  color: var(--color-tm-text-secondary);
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.tm-btn-secondary:hover {
+  border-color: var(--color-tm-border-hover);
+  background: var(--color-tm-card-hover);
 }

@@ -8,11 +8,13 @@ export function TradePage() {
 
   if (!signal) {
     return (
-      <div className="space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold text-tm-text">Input your trade</h1>
-          <p className="mt-1 text-sm text-tm-muted">Upload, paste, or manually enter a signal.</p>
-        </div>
+      <div className="space-y-4">
+        <section className="text-center">
+          <h1 className="text-[1.35rem] font-bold text-tm-text">Input your trade</h1>
+          <p className="mx-auto mt-2 max-w-sm text-[13px] text-tm-muted">
+            Upload, paste, or manually enter a signal.
+          </p>
+        </section>
         <TradeInputPanel />
       </div>
     );
