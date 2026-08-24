@@ -1,28 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
 
 export function RegisterPage() {
   const { signUp, configured } = useAuth();
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-  });
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!configured) {
-    return (
-      <Card className="mx-auto max-w-md text-center">
-        <p className="text-gray-400">Supabase is not configured.</p>
-      </Card>
-    );
+    return <div className="tm-card p-4 text-center text-sm text-tm-muted">Supabase is not configured.</div>;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,42 +37,45 @@ export function RegisterPage() {
 
   if (success) {
     return (
-      <Card className="mx-auto max-w-md text-center">
-        <h2 className="text-xl font-bold text-white">Please verify your email</h2>
-        <p className="mt-2 text-gray-400">
-          Check your inbox and click the verification link.
-        </p>
-        <Link to="/verify-email" className="mt-4 inline-block text-accent-gold hover:underline">
-          Go to verification page
-        </Link>
-      </Card>
+      <div className="tm-card mx-auto max-w-[430px] p-4 text-center">
+        <h2 className="text-lg font-bold text-tm-text">Please verify your email</h2>
+        <p className="mt-2 text-sm text-tm-muted">Check your inbox and click the verification link.</p>
+        <Link to="/verify-email" className="mt-4 inline-block text-sm text-tm-gold">Go to verification page</Link>
+      </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6">
+    <div className="mx-auto max-w-[430px] space-y-5">
       <div className="text-center">
-        <img src="/assets/trademirror-logo.svg" alt="TradeMirror" className="mx-auto h-12 w-12" />
-        <h1 className="mt-4 text-2xl font-bold text-white">Create Account</h1>
+        <img src="/assets/trademirror-logo.svg" alt="TradeMirror" className="mx-auto h-10 w-10" />
+        <h1 className="mt-3 text-xl font-bold text-tm-text">Create Account</h1>
       </div>
-      <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="First Name" required value={form.firstName} onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))} />
-          <Input label="Last Name" required value={form.lastName} onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))} />
-          <Input label="Email" type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
-          <Input label="Password" type="password" required minLength={8} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
-          {error && <p className="text-sm text-loss">{error}</p>}
-          <Button type="submit" fullWidth disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Free Account'}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-sm text-gray-400">
-          Already have an account?{' '}
-          <Link to="/login" className="text-accent-gold hover:underline">
-            Log In
-          </Link>
+      <form onSubmit={handleSubmit} className="tm-card space-y-3 p-4">
+        <label className="block">
+          <span className="tm-label">First Name</span>
+          <input className="tm-input mt-1.5" required value={form.firstName} onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))} />
+        </label>
+        <label className="block">
+          <span className="tm-label">Last Name</span>
+          <input className="tm-input mt-1.5" required value={form.lastName} onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))} />
+        </label>
+        <label className="block">
+          <span className="tm-label">Email</span>
+          <input className="tm-input mt-1.5" type="email" required value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+        </label>
+        <label className="block">
+          <span className="tm-label">Password</span>
+          <input className="tm-input mt-1.5" type="password" required minLength={8} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+        </label>
+        {error && <p className="text-sm text-tm-red">{error}</p>}
+        <button type="submit" disabled={loading} className="tm-btn-primary justify-center">
+          {loading ? 'Creating account...' : 'Create Free Account'}
+        </button>
+        <p className="text-center text-sm text-tm-muted">
+          Already have an account? <Link to="/login" className="text-tm-gold">Log In</Link>
         </p>
-      </Card>
+      </form>
     </div>
   );
 }

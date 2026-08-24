@@ -3,13 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { profileService } from '../services/profileService';
 import { supabase } from '../lib/supabase';
-import { Button } from '../components/ui/Button';
-import { Card, CardTitle } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
 import { ProtectedRoute, VerifiedRoute } from '../components/layout/ProtectedRoute';
 
 function AccountContent() {
-  const { user, profile, refreshProfile, updateEmail } = useAuth();
+  const { user, profile, refreshProfile, updateEmail, signOut } = useAuth();
   const [firstName, setFirstName] = useState(profile?.first_name ?? '');
   const [lastName, setLastName] = useState(profile?.last_name ?? '');
   const [email, setEmail] = useState(profile?.email ?? user?.email ?? '');
@@ -61,52 +58,61 @@ function AccountContent() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white">
-            Welcome back, {profile?.first_name || 'Trader'} 👋
-          </h1>
-          <p className="text-gray-400">Manage your TradeMirror account</p>
-        </div>
-        <Link to="/strategies">
-          <Button variant="secondary">Manage Strategies</Button>
-        </Link>
+    <div className="space-y-4">
+      <h1 className="text-lg font-bold text-tm-text">Account</h1>
+
+      <div className="tm-card p-3.5">
+        <p className="tm-section-title">Profile</p>
+        <p className="mt-2 text-sm font-semibold text-tm-text">
+          {profile?.first_name} {profile?.last_name}
+        </p>
+        <p className="text-xs text-tm-muted">{profile?.email ?? user?.email}</p>
+        <p className="mt-2 text-xs text-tm-green">Logged in</p>
       </div>
 
-      <Card>
-        <CardTitle>Profile</CardTitle>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-          <Input label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-        </div>
-        <Button className="mt-4" onClick={saveProfile}>
+      <div className="tm-card space-y-3 p-3.5">
+        <p className="tm-section-title">Edit Profile</p>
+        <label className="block">
+          <span className="tm-label">First Name</span>
+          <input className="tm-input mt-1.5" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+        </label>
+        <label className="block">
+          <span className="tm-label">Last Name</span>
+          <input className="tm-input mt-1.5" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+        </label>
+        <button type="button" onClick={saveProfile} className="tm-btn-primary justify-center">
           Save Profile
-        </Button>
-        {profileMessage && <p className="mt-2 text-sm text-profit">{profileMessage}</p>}
-      </Card>
+        </button>
+        {profileMessage && <p className="text-xs text-tm-green">{profileMessage}</p>}
+      </div>
 
-      <Card>
-        <CardTitle>Change Email</CardTitle>
-        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Button className="mt-4" variant="secondary" onClick={changeEmail}>
+      <div className="tm-card space-y-3 p-3.5">
+        <p className="tm-section-title">Change Email</p>
+        <input className="tm-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <button type="button" onClick={changeEmail} className="tm-btn-secondary w-full">
           Update Email
-        </Button>
-        {emailMessage && <p className="mt-2 text-sm text-gray-300">{emailMessage}</p>}
-      </Card>
+        </button>
+        {emailMessage && <p className="text-xs text-tm-muted">{emailMessage}</p>}
+      </div>
 
-      <Card>
-        <CardTitle>Change Password</CardTitle>
-        <div className="grid gap-4">
-          <Input label="Current Password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-          <Input label="New Password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-          <Input label="Confirm New Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-        </div>
-        <Button className="mt-4" variant="secondary" onClick={changePassword}>
+      <div className="tm-card space-y-3 p-3.5">
+        <p className="tm-section-title">Change Password</p>
+        <input className="tm-input" type="password" placeholder="Current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+        <input className="tm-input" type="password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+        <input className="tm-input" type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+        <button type="button" onClick={changePassword} className="tm-btn-secondary w-full">
           Change Password
-        </Button>
-        {passwordMessage && <p className="mt-2 text-sm text-gray-300">{passwordMessage}</p>}
-      </Card>
+        </button>
+        {passwordMessage && <p className="text-xs text-tm-muted">{passwordMessage}</p>}
+      </div>
+
+      <Link to="/strategies" className="tm-btn-secondary block text-center text-sm">
+        My Strategies
+      </Link>
+
+      <button type="button" onClick={() => signOut()} className="w-full py-2 text-sm text-tm-red">
+        Logout
+      </button>
     </div>
   );
 }

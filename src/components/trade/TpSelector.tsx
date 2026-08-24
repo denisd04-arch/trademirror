@@ -18,10 +18,10 @@ export function TpSelector({
           type="button"
           onClick={() => onChange(tp.label)}
           className={cn(
-            'rounded-lg border px-3 py-1.5 text-xs font-semibold transition',
+            'rounded-[10px] border px-3 py-1.5 text-[11px] font-semibold',
             value.toUpperCase() === tp.label.toUpperCase()
-              ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
-              : 'border-tm-border bg-tm-card text-tm-muted',
+              ? 'border-tm-gold bg-tm-gold/10 text-tm-gold'
+              : 'border-tm-border bg-tm-bg text-tm-muted',
           )}
         >
           {tp.label}

@@ -22,10 +22,10 @@ export function EntrySelector({
           type="button"
           onClick={() => onChange(option)}
           className={cn(
-            'rounded-lg border py-2 text-xs font-semibold tracking-wide transition',
+            'rounded-[10px] border py-2 text-[11px] font-semibold tracking-wide',
             value === option
-              ? 'border-accent-gold bg-accent-gold/10 text-accent-gold'
-              : 'border-tm-border bg-tm-card text-tm-muted',
+              ? 'border-tm-gold bg-tm-gold/10 text-tm-gold'
+              : 'border-tm-border bg-tm-bg text-tm-muted',
           )}
         >
           {option}
