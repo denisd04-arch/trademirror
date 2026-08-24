@@ -41,8 +41,8 @@ Create a `.env` file based on `.env.example`:
 |----------|-------------|
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
-| `OPENAI_API_KEY` | OpenAI API key (Vercel server only) |
-| `VITE_AI_PARSER_ENABLED` | Set `true` to enable screenshot parsing |
+| `OPENAI_API_KEY` | OpenAI API key (local dev fallback) |
+| `VERCEL_CONNECT_OPENAI_CONNECTOR` | Vercel Connect connector (default: `api.openai.com/trademirror`) |
 
 **Never expose** `SUPABASE_SERVICE_ROLE_KEY` or `OPENAI_API_KEY` in frontend code.
 
@@ -76,9 +76,16 @@ supabase db push
 
 Screenshot parsing runs server-side via `/api/parse-screenshot`:
 
-1. Set `OPENAI_API_KEY` in Vercel environment variables
-2. Set `VITE_AI_PARSER_ENABLED=true` in Vercel (and local `.env` for testing)
-3. The frontend calls the Vercel function — AI secrets never reach the browser
+**Option A — Vercel Connect (recommended on Vercel):**
+1. `vercel connect create api.openai.com --name trademirror`
+2. Add your OpenAI API key to the connector in Vercel Dashboard → Connect
+3. Redeploy
+
+**Option B — Direct API key (local dev):**
+1. Set `OPENAI_API_KEY` in `.env`
+2. Run with `npx vercel dev` (not `npm run dev`) so `/api` routes work
+
+The frontend always calls the server endpoint — no separate frontend flag needed.
 
 ## Local Development
 
