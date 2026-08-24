@@ -29,16 +29,6 @@ export const signalParserService = {
   },
 
   async parseScreenshot(file: File): Promise<ParseScreenshotResult> {
-    const apiKeyConfigured = import.meta.env.VITE_AI_PARSER_ENABLED === 'true';
-
-    if (!apiKeyConfigured) {
-      return {
-        success: false,
-        error: 'AI parser is not configured.',
-        configurationError: true,
-      };
-    }
-
     try {
       const base64 = await fileToBase64(file);
       const mimeType = file.type || 'image/png';
