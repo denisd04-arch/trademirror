@@ -24,6 +24,19 @@ export type TradeSignal = {
   screenshotFile?: File;
 };
 
+export type Profile = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  email_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login: string | null;
+  account_status: 'active' | 'disabled';
+  active_strategy_id: string | null;
+};
+
 export type Strategy = {
   id: string;
   user_id: string;
@@ -32,21 +45,10 @@ export type Strategy = {
   currency: Currency;
   risk_percent: number;
   entry_method: EntryMethod;
-  default_tp: string;
+  default_tp: string | null;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
-};
-
-export type Profile = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string | null;
-  created_at: string;
-  updated_at: string;
-  last_login: string | null;
-  account_status: string;
-  active_strategy_id: string | null;
 };
 
 export type GuestSettings = {

@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, configured } = useAuth();
+  const { user, loading, configured, isAccountDisabled } = useAuth();
   const location = useLocation();
 
   if (!configured) {
@@ -26,6 +26,17 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (isAccountDisabled) {
+    return (
+      <div className="tm-card p-4 text-center">
+        <h2 className="text-lg font-semibold text-tm-text">Account Unavailable</h2>
+        <p className="mt-2 text-sm text-tm-muted">
+          Your account is currently unavailable. Please contact support.
+        </p>
+      </div>
+    );
   }
 
   return <>{children}</>;

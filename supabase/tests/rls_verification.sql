@@ -1,0 +1,16 @@
+-- RLS verification checklist for TradeMirror
+-- Run manually in Supabase SQL editor with two test users (User A and User B).
+--
+-- Expected: all cross-user reads/updates/deletes return zero rows or raise errors.
+
+-- 1. As User A: SELECT * FROM profiles WHERE id != auth.uid();  -> only own row
+-- 2. As User A: SELECT * FROM strategies WHERE user_id != auth.uid(); -> empty
+-- 3. As User A: UPDATE profiles SET account_status = 'disabled' WHERE id = auth.uid();
+--    -> should remain 'active' (trigger blocks client update)
+-- 4. As User A: UPDATE strategies SET user_id = '<user_b_uuid>' WHERE id = '<own_strategy>';
+--    -> should fail with ownership error
+-- 5. As User A: UPDATE strategies SET is_active = true WHERE id = '<own_strategy>';
+--    -> direct is_active change blocked; use set_active_strategy RPC
+-- 6. As User A: SELECT set_active_strategy('<user_b_strategy_uuid>'); -> should fail
+-- 7. As User A: SELECT set_active_strategy('<own_strategy_uuid>'); -> should succeed
+-- 8. Verify only one strategy has is_active = true per user after step 7

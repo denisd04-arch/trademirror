@@ -52,14 +52,14 @@ function strategyToSettings(strategy: Strategy): TradeSettings {
     currency: strategy.currency,
     riskPercent: strategy.risk_percent,
     entryMethod: strategy.entry_method,
-    defaultTp: strategy.default_tp,
+    defaultTp: strategy.default_tp ?? 'TP1',
     strategyId: strategy.id,
     strategyName: strategy.strategy_name,
   };
 }
 
 export function TradeProvider({ children }: { children: ReactNode }) {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [signal, setSignal] = useState<TradeSignal | null>(null);
   const [guestSettings, setGuestSettingsState] = useState<GuestSettings>(DEFAULT_GUEST);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
@@ -78,7 +78,11 @@ export function TradeProvider({ children }: { children: ReactNode }) {
     try {
       const list = await strategyService.list(user.id);
       setStrategies(list);
-      const activeId = profile?.active_strategy_id ?? list[0]?.id ?? null;
+      const activeId =
+        list.find((strategy) => strategy.is_active)?.id ??
+        profile?.active_strategy_id ??
+        list[0]?.id ??
+        null;
       setActiveStrategyId(activeId);
     } finally {
       setLoadingStrategies(false);
@@ -133,7 +137,14 @@ export function TradeProvider({ children }: { children: ReactNode }) {
     async (strategyId: string) => {
       setActiveStrategyId(strategyId);
       if (user) {
-        await strategyService.setActive(user.id, strategyId);
+        await strategyService.setActive(strategyId);
+        await refreshProfile();
+        setStrategies((prev) =>
+          prev.map((strategy) => ({
+            ...strategy,
+            is_active: strategy.id === strategyId,
+          })),
+        );
       }
       const strategy = strategies.find((s) => s.id === strategyId);
       if (strategy && signal) {
@@ -142,7 +153,7 @@ export function TradeProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [user, strategies, signal],
+    [user, strategies, signal, refreshProfile],
   );
 
   const resetTrade = useCallback(() => {

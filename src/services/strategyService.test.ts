@@ -37,4 +37,16 @@ describe('strategyFormSchema', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it('rejects invalid default TP', () => {
+    const result = strategyFormSchema.safeParse({
+      strategy_name: 'Test',
+      account_balance: 1000,
+      currency: 'USD',
+      risk_percent: 1,
+      entry_method: 'MIDDLE',
+      default_tp: 'TP9',
+    });
+    expect(result.success).toBe(false);
+  });
 });

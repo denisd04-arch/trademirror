@@ -15,6 +15,7 @@ export type Database = {
           first_name: string;
           last_name: string;
           email: string | null;
+          email_verified: boolean;
           created_at: string;
           updated_at: string;
           last_login: string | null;
@@ -26,6 +27,7 @@ export type Database = {
           first_name: string;
           last_name: string;
           email?: string | null;
+          email_verified?: boolean;
           created_at?: string;
           updated_at?: string;
           last_login?: string | null;
@@ -37,6 +39,7 @@ export type Database = {
           first_name?: string;
           last_name?: string;
           email?: string | null;
+          email_verified?: boolean;
           created_at?: string;
           updated_at?: string;
           last_login?: string | null;
@@ -54,7 +57,8 @@ export type Database = {
           currency: string;
           risk_percent: number;
           entry_method: string;
-          default_tp: string;
+          default_tp: string | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -66,7 +70,8 @@ export type Database = {
           currency: string;
           risk_percent: number;
           entry_method: string;
-          default_tp: string;
+          default_tp?: string | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -78,7 +83,8 @@ export type Database = {
           currency?: string;
           risk_percent?: number;
           entry_method?: string;
-          default_tp?: string;
+          default_tp?: string | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -86,7 +92,16 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      set_active_strategy: {
+        Args: { p_strategy_id: string };
+        Returns: undefined;
+      };
+      touch_last_login: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
