@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getToken } from '@vercel/connect';
 import { z } from 'zod';
 import { normalizeAiResponse } from '../src/parsers/normalizeAiResponse';
 
@@ -6,6 +7,7 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 10;
 const RATE_WINDOW_MS = 60_000;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const DEFAULT_OPENAI_CONNECTOR = 'api.openai.com/trademirror';
 
 const requestSchema = z.object({
   image: z.string().min(1),
@@ -30,18 +32,33 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-async function parseWithOpenAI(base64Image: string, mimeType: string) {
+async function getOpenAIAuthToken(): Promise<string> {
+  const connector = process.env.VERCEL_CONNECT_OPENAI_CONNECTOR ?? DEFAULT_OPENAI_CONNECTOR;
+
+  try {
+    const token = await getToken(connector, { subject: { type: 'app' } });
+    logDev('using Vercel Connect token', { connector });
+    return token;
+  } catch {
+    logDev('Vercel Connect unavailable, falling back to OPENAI_API_KEY');
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not configured');
   }
+  return apiKey;
+}
+
+async function parseWithOpenAI(base64Image: string, mimeType: string) {
+  const authToken = await getOpenAIAuthToken();
 
   logDev('AI request started', { mimeType, imageSize: base64Image.length });
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${authToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -85,7 +102,6 @@ Rules:
   });
 
   if (!response.ok) {
-    const err = await response.text();
     logDev('AI provider error', { status: response.status });
     throw new Error(`AI provider error: ${response.status}`);
   }
