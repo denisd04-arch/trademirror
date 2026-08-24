@@ -1,15 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  --color-surface-950: #07090d;
-  --color-surface-900: #0d1117;
-  --color-surface-800: #151b24;
-  --color-surface-700: #1e2733;
-  --color-surface-600: #2a3544;
+  --color-tm-bg: #09090b;
+  --color-tm-card: #111113;
+  --color-tm-card-hover: #18181b;
+  --color-tm-border: #27272a;
+  --color-tm-border-hover: #3f3f46;
+  --color-tm-muted: #71717a;
+  --color-tm-text: #fafafa;
+  --color-tm-text-secondary: #d4d4d8;
   --color-accent-gold: #d4a853;
-  --color-accent-gold-dim: #a67c2e;
+  --color-accent-gold-dim: #b8923f;
   --color-profit: #22c55e;
+  --color-profit-dim: #16a34a;
   --color-loss: #ef4444;
+  --color-warning: #f59e0b;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -26,8 +31,8 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--color-surface-950);
-  color: #e8edf5;
+  background: var(--color-tm-bg);
+  color: var(--color-tm-text);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -40,4 +45,41 @@ button {
 
 ::selection {
   background: color-mix(in srgb, var(--color-accent-gold) 35%, transparent);
+}
+
+.tm-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-tm-muted);
+}
+
+.tm-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-tm-border);
+  background: color-mix(in srgb, var(--color-tm-card) 90%, transparent);
+  padding: 0.75rem 0.875rem;
+  color: var(--color-tm-text);
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.tm-input:focus {
+  border-color: color-mix(in srgb, var(--color-accent-gold) 60%, var(--color-tm-border));
+}
+
+.tm-card {
+  border-radius: 0.875rem;
+  border: 1px solid var(--color-tm-border);
+  background: var(--color-tm-card);
+}
+
+.tm-section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-tm-muted);
 }

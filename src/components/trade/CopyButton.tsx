@@ -1,15 +1,13 @@
 import { Clipboard, ClipboardCheck } from 'lucide-react';
 import { copyToClipboard } from '../../utils';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
-import { Button } from '../ui/Button';
 
 type CopyButtonProps = {
   field: string;
   value: string;
-  label?: string;
 };
 
-export function CopyButton({ field, value, label = 'Copy' }: CopyButtonProps) {
+export function CopyButton({ field, value }: CopyButtonProps) {
   const { copiedField, markCopied } = useCopyFeedback();
   const copied = copiedField === field;
 
@@ -19,23 +17,22 @@ export function CopyButton({ field, value, label = 'Copy' }: CopyButtonProps) {
   };
 
   return (
-    <Button
-      variant="ghost"
-      className="h-8 px-2 py-1 text-xs"
-      onClick={handleCopy}
+    <button
       type="button"
+      onClick={handleCopy}
+      className="inline-flex items-center gap-1 rounded-md border border-tm-border px-2 py-1 text-[11px] text-tm-muted transition hover:text-tm-text"
     >
       {copied ? (
         <>
-          <ClipboardCheck className="h-3.5 w-3.5 text-profit" />
+          <ClipboardCheck className="h-3 w-3 text-profit" />
           Copied ✓
         </>
       ) : (
         <>
-          <Clipboard className="h-3.5 w-3.5" />
-          {label}
+          <Clipboard className="h-3 w-3" />
+          Copy
         </>
       )}
-    </Button>
+    </button>
   );
 }

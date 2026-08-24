@@ -17,8 +17,7 @@ import { CopyButton } from './CopyButton';
 import { EditSignalForm } from './EditSignalForm';
 import { EntrySelector } from './EntrySelector';
 import { TpSelector } from './TpSelector';
-import { Button } from '../ui/Button';
-import { Card, CardTitle } from '../ui/Card';
+import { cn } from '../../utils';
 
 export function TradeResultView() {
   const { user } = useAuth();
@@ -43,7 +42,7 @@ export function TradeResultView() {
   const currency = currentSettings.currency;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 pb-8">
       <AccountSwitcher
         strategies={strategies}
         activeStrategyId={activeStrategyId}
@@ -53,10 +52,7 @@ export function TradeResultView() {
         onGuestChange={(partial) => {
           setGuestSettings(partial);
           if (signal) {
-            const nextSettings = {
-              ...currentSettings,
-              ...partial,
-            };
+            const nextSettings = { ...currentSettings, ...partial };
             setTradeOverrides(
               getInitialTradeOverrides(signal, {
                 ...nextSettings,
@@ -68,13 +64,21 @@ export function TradeResultView() {
         }}
       />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="secondary" onClick={resetTrade}>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={resetTrade}
+          className="rounded-lg border border-tm-border px-3 py-2 text-sm text-tm-muted transition hover:text-tm-text"
+        >
           New Signal
-        </Button>
-        <Button variant="ghost" onClick={() => setEditing((v) => !v)}>
-          {editing ? 'Close Editor' : 'Edit Signal'}
-        </Button>
+        </button>
+        <button
+          type="button"
+          onClick={() => setEditing((v) => !v)}
+          className="rounded-lg border border-tm-border px-3 py-2 text-sm text-accent-gold"
+        >
+          {editing ? 'Close' : 'Edit Signal'}
+        </button>
       </div>
 
       {editing && (
@@ -88,168 +92,218 @@ export function TradeResultView() {
         />
       )}
 
-      <Card>
-        <CardTitle>Original Signal</CardTitle>
+      {/* ORIGINAL SIGNAL */}
+      <section className="tm-card p-4">
+        <h2 className="tm-section-title">Original Signal</h2>
         {signal.source === 'SCREENSHOT' && signal.screenshotUrl && (
           <img
             src={signal.screenshotUrl}
             alt="Original trading signal screenshot"
-            className="max-h-80 w-full rounded-xl object-contain"
+            className="mt-3 max-h-72 w-full rounded-lg object-contain"
           />
         )}
         {signal.originalText && (
-          <pre className="overflow-x-auto rounded-xl bg-surface-800 p-4 text-sm whitespace-pre-wrap text-gray-300">
+          <pre className="mt-3 overflow-x-auto rounded-lg bg-tm-bg p-3 text-xs whitespace-pre-wrap text-tm-text-secondary">
             {signal.originalText}
           </pre>
         )}
         {signal.source === 'MANUAL' && !signal.originalText && (
-          <div className="text-sm text-gray-300">
+          <p className="mt-3 text-sm text-tm-text-secondary">
             {signal.direction} · SL {formatPrice(signal.stopLoss)} ·{' '}
             {signal.entryType === 'SINGLE'
               ? `Entry ${formatPrice(signal.singleEntry!)}`
               : `${formatPrice(signal.bestEntry!)} / ${formatPrice(signal.worstEntry!)}`}
-          </div>
+          </p>
         )}
-      </Card>
+      </section>
 
-      <Card>
-        <CardTitle>Your Trade</CardTitle>
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="rounded-lg bg-surface-800 px-3 py-1 text-sm text-gray-300">
-            {currentSettings.strategyName ?? 'Guest'}
-          </span>
+      {/* YOUR TRADE */}
+      <section className="tm-card p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="tm-section-title">Your Trade</h2>
           <span
-            className={`rounded-lg px-3 py-1 text-sm font-bold ${
-              signal.direction === 'BUY' ? 'bg-profit/15 text-profit' : 'bg-loss/15 text-loss'
-            }`}
+            className={cn(
+              'rounded-md px-2 py-0.5 text-xs font-bold',
+              signal.direction === 'BUY' ? 'bg-profit/15 text-profit' : 'bg-loss/15 text-loss',
+            )}
           >
             XAUUSD {signal.direction}
           </span>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <TradeMetric label="Entry" value={formatPrice(calculation.entry)} copyField="entry" copyValue={formatPrice(calculation.entry)} />
-          <TradeMetric label="Stop Loss" value={formatPrice(calculation.stopLoss)} copyField="sl" copyValue={formatPrice(calculation.stopLoss)} />
-          <TradeMetric label="Take Profit" value={formatPrice(calculation.takeProfit)} copyField="tp" copyValue={formatPrice(calculation.takeProfit)} />
-          <TradeMetric label="Lot" value={formatLot(calculation.lotSize)} copyField="lot" copyValue={formatLot(calculation.lotSize)} />
-          <TradeMetric label="Risk" value={formatCurrency(calculation.actualRisk, currency)} />
-          <TradeMetric label="CRV" value={formatCrv(calculation.crv)} />
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+          <Metric label="Account" value={currentSettings.strategyName ?? 'Guest'} />
+          <Metric label="Risk" value={formatRiskPercent(currentSettings.riskPercent)} />
+          <Metric label="Target Risk" value={formatCurrency(calculation.targetRisk, currency).replace(/^[+-]/, '')} />
+          <Metric label="Actual Risk" value={formatCurrency(calculation.actualRisk, currency).replace(/^[+-]/, '')} />
+          <Metric label="Actual Risk %" value={formatRiskPercent(calculation.actualRiskPercent)} className="col-span-2" />
+        </div>
+
+        <div className="my-4 border-t border-tm-border" />
+
+        <div className="space-y-3">
+          <CopyRow label="Entry" value={formatPrice(calculation.entry)} copyField="entry" />
+          <CopyRow label="Stop Loss" value={formatPrice(calculation.stopLoss)} copyField="sl" />
+          <Row label="Potential Loss" value={formatCurrency(-calculation.potentialLoss, currency)} valueClass="text-loss" />
+          <CopyRow label="Lot Size" value={formatLot(calculation.lotSize)} copyField="lot" />
+          <CopyRow label="Selected TP" value={formatPrice(calculation.takeProfit)} copyField="tp" />
+          <Row label="Potential Profit" value={formatCurrency(calculation.potentialProfit, currency)} valueClass="text-profit" />
+          <Row label="CRV" value={formatCrv(calculation.crv)} valueClass="text-tm-text" />
         </div>
 
         {calculation.riskExceeded && (
-          <div className="mt-4 flex items-start gap-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 text-yellow-200">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
-            <div>
+          <div className="mt-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3 text-warning">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="text-sm">
               <p className="font-medium">Actual risk exceeds your selected risk</p>
-              <p className="mt-1 text-sm">
-                Target: {formatCurrency(calculation.targetRisk, currency)} · Actual:{' '}
-                {formatCurrency(calculation.actualRisk, currency)} ·{' '}
-                {formatRiskPercent(calculation.actualRiskPercent)}
+              <p className="mt-1 text-xs opacity-90">
+                Target {formatCurrency(calculation.targetRisk, currency).replace(/^[+-]/, '')} · Actual{' '}
+                {formatCurrency(calculation.actualRisk, currency).replace(/^[+-]/, '')}
               </p>
             </div>
           </div>
         )}
-      </Card>
+      </section>
 
       {isZone && (
-        <Card>
-          <CardTitle>Entry Selector</CardTitle>
+        <section className="tm-card p-4">
+          <h2 className="tm-section-title mb-3">Entry</h2>
           <EntrySelector
             value={tradeOverrides.selectedEntry}
             onChange={(selectedEntry) => setTradeOverrides({ selectedEntry })}
           />
-        </Card>
+        </section>
       )}
 
-      <Card>
-        <CardTitle>TP Selector</CardTitle>
+      <section className="tm-card p-4">
+        <h2 className="tm-section-title mb-3">Take Profit</h2>
         <TpSelector
           takeProfits={signal.takeProfits}
           value={tradeOverrides.selectedTpLabel}
           onChange={(selectedTpLabel) => setTradeOverrides({ selectedTpLabel })}
         />
-      </Card>
+      </section>
 
-      <Card>
-        <CardTitle>Trade Details</CardTitle>
-        <dl className="grid gap-3 sm:grid-cols-2">
+      {/* TRADE DETAILS */}
+      <section className="tm-card p-4">
+        <h2 className="tm-section-title mb-3">Trade Details</h2>
+        <dl className="space-y-2.5 text-sm">
           <Detail label="Account" value={currentSettings.strategyName ?? 'Guest'} />
           <Detail label="Balance" value={formatCurrency(currentSettings.accountBalance, currency).replace(/^[+-]/, '')} />
           <Detail label="Risk" value={formatRiskPercent(currentSettings.riskPercent)} />
-          <Detail label="Target Risk" value={formatCurrency(calculation.targetRisk, currency)} />
-          <Detail label="Actual Risk" value={formatCurrency(calculation.actualRisk, currency)} />
+          <Detail label="Target Risk" value={formatCurrency(calculation.targetRisk, currency).replace(/^[+-]/, '')} />
+          <Detail label="Actual Risk" value={formatCurrency(calculation.actualRisk, currency).replace(/^[+-]/, '')} />
           <Detail label="Actual Risk %" value={formatRiskPercent(calculation.actualRiskPercent)} />
           <Detail label="Entry" value={formatPrice(calculation.entry)} />
           <Detail label="Stop Loss" value={formatPrice(calculation.stopLoss)} />
-          <Detail label="Potential Loss" value={formatCurrency(-calculation.potentialLoss, currency)} />
+          <Detail label="Potential Loss" value={formatCurrency(-calculation.potentialLoss, currency)} negative />
           <Detail label="Lot Size" value={formatLot(calculation.lotSize)} />
           <Detail label="Selected TP" value={calculation.selectedTpLabel} />
           <Detail label="Potential Profit" value={formatCurrency(calculation.potentialProfit, currency)} positive />
           <Detail label="CRV" value={formatCrv(calculation.crv)} />
         </dl>
-      </Card>
+      </section>
 
-      <Card>
-        <CardTitle>All Take Profits</CardTitle>
-        <div className="space-y-3">
-          {calculation.allTakeProfits.map((tp) => (
-            <div
-              key={tp.label}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-surface-700 bg-surface-800/60 px-4 py-3"
-            >
-              <div>
-                <p className="font-semibold text-white">{tp.label}</p>
-                <p className="text-sm text-gray-400">{formatPrice(tp.price)}</p>
+      {/* ALL TAKE PROFITS */}
+      <section className="tm-card p-4">
+        <h2 className="tm-section-title mb-3">All Take Profits</h2>
+        <div className="space-y-2">
+          {calculation.allTakeProfits.map((tp) => {
+            const selected = tp.label.toUpperCase() === calculation.selectedTpLabel.toUpperCase();
+            return (
+              <div
+                key={tp.label}
+                className={cn(
+                  'flex items-center justify-between rounded-lg border px-3 py-3',
+                  selected
+                    ? 'border-accent-gold/40 bg-accent-gold/10'
+                    : 'border-tm-border bg-tm-bg/50',
+                )}
+              >
+                <div>
+                  <p className="text-sm font-semibold text-tm-text">{tp.label}</p>
+                  <p className="text-sm text-tm-text-secondary">{formatPrice(tp.price)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-profit">
+                    {formatCurrency(tp.profit, currency)}
+                  </p>
+                  <p className="text-xs text-tm-muted">CRV {formatCrv(tp.crv)}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-medium text-profit">
-                  {formatCurrency(tp.profit, currency)}
-                </p>
-                <p className="text-sm text-gray-400">CRV {formatCrv(tp.crv)}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </Card>
+      </section>
 
       {!user && (
-        <Card className="border-accent-gold/30 bg-gradient-to-br from-surface-900 to-surface-800">
-          <h3 className="text-lg font-bold text-white">Save Your Trading Setups</h3>
-          <p className="mt-2 text-gray-300">
+        <section className="tm-card border-accent-gold/30 p-4">
+          <h3 className="text-base font-bold text-tm-text">Save Your Trading Setups</h3>
+          <p className="mt-2 text-sm text-tm-muted">
             Create a free TradeMirror account to save accounts, risk settings, entry preferences,
             default TP, and multiple strategies.
           </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link to="/register">
-              <Button>Create Free Account</Button>
+          <div className="mt-4 flex gap-2">
+            <Link
+              to="/register"
+              className="flex-1 rounded-xl bg-accent-gold py-3 text-center text-sm font-semibold text-tm-bg"
+            >
+              Create Free Account
             </Link>
-            <Link to="/login">
-              <Button variant="secondary">Log In</Button>
+            <Link
+              to="/login"
+              className="flex-1 rounded-xl border border-tm-border py-3 text-center text-sm text-tm-text-secondary"
+            >
+              Log In
             </Link>
           </div>
-        </Card>
+        </section>
       )}
     </div>
   );
 }
 
-function TradeMetric({
+function Metric({ label, value, className }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="text-xs text-tm-muted">{label}</p>
+      <p className="mt-0.5 font-medium text-tm-text">{value}</p>
+    </div>
+  );
+}
+
+function Row({
   label,
   value,
-  copyField,
-  copyValue,
+  valueClass,
 }: {
   label: string;
   value: string;
-  copyField?: string;
-  copyValue?: string;
+  valueClass?: string;
 }) {
   return (
-    <div className="rounded-xl border border-surface-700 bg-surface-800/50 p-4">
-      <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <p className="text-lg font-semibold text-white">{value}</p>
-        {copyField && copyValue && <CopyButton field={copyField} value={copyValue} />}
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-tm-muted">{label}</span>
+      <span className={cn('text-sm font-semibold', valueClass ?? 'text-tm-text')}>{value}</span>
+    </div>
+  );
+}
+
+function CopyRow({
+  label,
+  value,
+  copyField,
+}: {
+  label: string;
+  value: string;
+  copyField: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-tm-muted">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-tm-text">{value}</span>
+        <CopyButton field={copyField} value={value} />
       </div>
     </div>
   );
@@ -259,15 +313,24 @@ function Detail({
   label,
   value,
   positive,
+  negative,
 }: {
   label: string;
   value: string;
   positive?: boolean;
+  negative?: boolean;
 }) {
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-gray-500">{label}</dt>
-      <dd className={`mt-1 font-medium ${positive ? 'text-profit' : 'text-white'}`}>
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-tm-muted">{label}</dt>
+      <dd
+        className={cn(
+          'font-medium',
+          positive && 'text-profit',
+          negative && 'text-loss',
+          !positive && !negative && 'text-tm-text',
+        )}
+      >
         {value}
       </dd>
     </div>

@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import type { Direction, TakeProfit, TradeSignal } from '../../types';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Card, CardTitle } from '../ui/Card';
+import { cn } from '../../utils';
 
 type EditSignalProps = {
   signal: TradeSignal;
@@ -34,13 +32,7 @@ export function EditSignalForm({ signal, onSave, onCancel }: EditSignalProps) {
         setError('Valid entry is required');
         return;
       }
-      updated = {
-        ...signal,
-        direction,
-        singleEntry: entry,
-        stopLoss: sl,
-        takeProfits,
-      };
+      updated = { ...signal, direction, singleEntry: entry, stopLoss: sl, takeProfits };
     } else {
       const best = Number(bestEntry);
       const worst = Number(worstEntry);
@@ -48,14 +40,7 @@ export function EditSignalForm({ signal, onSave, onCancel }: EditSignalProps) {
         setError('Valid best and worst entries are required');
         return;
       }
-      updated = {
-        ...signal,
-        direction,
-        bestEntry: best,
-        worstEntry: worst,
-        stopLoss: sl,
-        takeProfits,
-      };
+      updated = { ...signal, direction, bestEntry: best, worstEntry: worst, stopLoss: sl, takeProfits };
     }
 
     onSave(updated);
@@ -63,60 +48,79 @@ export function EditSignalForm({ signal, onSave, onCancel }: EditSignalProps) {
 
   const updateTp = (index: number, price: string) => {
     setTakeProfits((prev) =>
-      prev.map((tp, i) =>
-        i === index ? { ...tp, price: Number(price) || 0 } : tp,
-      ),
+      prev.map((tp, i) => (i === index ? { ...tp, price: Number(price) || 0 } : tp)),
     );
   };
 
   return (
-    <Card>
-      <CardTitle>Edit Signal</CardTitle>
-      <div className="grid gap-4">
-        <div className="flex gap-2">
+    <div className="tm-card p-4">
+      <h2 className="tm-section-title mb-3">Edit Signal</h2>
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-2">
           {(['BUY', 'SELL'] as Direction[]).map((d) => (
-            <Button
+            <button
               key={d}
               type="button"
-              variant={direction === d ? 'primary' : 'secondary'}
               onClick={() => setDirection(d)}
+              className={cn(
+                'rounded-lg border py-2.5 text-sm font-semibold',
+                direction === d
+                  ? d === 'BUY'
+                    ? 'border-profit bg-profit/10 text-profit'
+                    : 'border-loss bg-loss/10 text-loss'
+                  : 'border-tm-border text-tm-muted',
+              )}
             >
               {d}
-            </Button>
+            </button>
           ))}
         </div>
 
         {signal.entryType === 'SINGLE' ? (
-          <Input label="Entry" value={singleEntry} onChange={(e) => setSingleEntry(e.target.value)} />
+          <label className="block">
+            <span className="tm-label">Entry</span>
+            <input className="tm-input mt-1.5" value={singleEntry} onChange={(e) => setSingleEntry(e.target.value)} />
+          </label>
         ) : (
-          <>
-            <Input label="Best Entry" value={bestEntry} onChange={(e) => setBestEntry(e.target.value)} />
-            <Input label="Worst Entry" value={worstEntry} onChange={(e) => setWorstEntry(e.target.value)} />
-          </>
+          <div className="grid grid-cols-2 gap-2">
+            <label>
+              <span className="tm-label">Best Entry</span>
+              <input className="tm-input mt-1.5" value={bestEntry} onChange={(e) => setBestEntry(e.target.value)} />
+            </label>
+            <label>
+              <span className="tm-label">Worst Entry</span>
+              <input className="tm-input mt-1.5" value={worstEntry} onChange={(e) => setWorstEntry(e.target.value)} />
+            </label>
+          </div>
         )}
 
-        <Input label="Stop Loss" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} />
+        <label className="block">
+          <span className="tm-label">Stop Loss</span>
+          <input className="tm-input mt-1.5" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} />
+        </label>
 
         {takeProfits.map((tp, index) => (
-          <Input
-            key={tp.label}
-            label={tp.label}
-            value={tp.price.toString()}
-            onChange={(e) => updateTp(index, e.target.value)}
-          />
+          <label key={tp.label} className="block">
+            <span className="tm-label">{tp.label}</span>
+            <input
+              className="tm-input mt-1.5"
+              value={tp.price.toString()}
+              onChange={(e) => updateTp(index, e.target.value)}
+            />
+          </label>
         ))}
 
         {error && <p className="text-sm text-loss">{error}</p>}
 
         <div className="flex gap-2">
-          <Button type="button" onClick={handleSave}>
+          <button type="button" onClick={handleSave} className="flex-1 rounded-xl bg-profit py-3 text-sm font-semibold text-tm-bg">
             Save Changes
-          </Button>
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          </button>
+          <button type="button" onClick={onCancel} className="rounded-xl border border-tm-border px-4 py-3 text-sm text-tm-muted">
             Cancel
-          </Button>
+          </button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
